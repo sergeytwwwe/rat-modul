@@ -3,6 +3,7 @@
 
 import psutil
 import time
+import platform
 import logging
 try:
     import win32gui
@@ -36,41 +37,3 @@ def terminate_active_process():
     except Exception as e:
         logger.error(f"❌ Ошибка завершения процесса: {e}")
         return False, 0, None
-
-def minimize_active_window():
-    """Сворачивает активное окно"""
-    try:
-        if platform.system() == "Windows":
-            window = win32gui.GetForegroundWindow()
-            win32gui.ShowWindow(window, 6)  # 6 = SW_MINIMIZE
-            return True
-        return False
-    except Exception as e:
-        logger.error(f"❌ Ошибка сворачивания окна: {e}")
-        return False
-
-def minimize_all_windows():
-    """Сворачивает все окна"""
-    try:
-        if platform.system() == "Windows":
-            import win32con
-            win32gui.ShowWindow(win32gui.GetDesktopWindow(), win32con.SW_MINIMIZE)
-            return True
-        return False
-    except Exception as e:
-        logger.error(f"❌ Ошибка сворачивания всех окон: {e}")
-        return False
-
-def jiggle_mouse():
-    """Двигает мышкой"""
-    try:
-        if platform.system() == "Windows":
-            import win32api
-            import random
-            x, y = win32api.GetCursorPos()
-            win32api.SetCursorPos((x + random.randint(-10, 10), y + random.randint(-10, 10))
-            return True
-        return False
-    except Exception as e:
-        logger.error(f"❌ Ошибка движения мышки: {e}")
-        return False
