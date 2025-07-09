@@ -3,10 +3,10 @@
 
 import logging
 import random
+import time  # Добавлен импорт модуля time
 import platform
 try:
     import win32api
-    import win32con
 except ImportError:
     pass  # Для не-Windows систем
 
@@ -23,11 +23,11 @@ def jiggle_mouse():
         if platform.system() == "Windows":
             x, y = win32api.GetCursorPos()
             # Делаем несколько случайных движений
-            for _ in range(5):
-                dx = random.randint(-20, 20)
-                dy = random.randint(-20, 20)
+            for _ in range(10):
+                dx = random.randint(-50, 50)
+                dy = random.randint(-50, 50)
                 win32api.SetCursorPos((x + dx, y + dy))
-                time.sleep(0.1)
+                time.sleep(0.05)
             # Возвращаем курсор на место
             win32api.SetCursorPos((x, y))
             return True
