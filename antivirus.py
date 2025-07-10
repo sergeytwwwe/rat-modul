@@ -20,29 +20,46 @@ def detect_antivirus() -> List[str]:
 
 def _detect_windows_antivirus() -> List[str]:
     """Обнаружение антивирусов на Windows"""
+    antivirus = []
     try:
-        import wmi
-        c = wmi.WMI()
-        antivirus = []
-        
-        # Проверка через SecurityCenter2
+        # Проверка Windows Defender
         try:
-            for item in c.Win32_Product():
-                name = item.Name.lower()
-                if "antivirus" in name or "security" in name or "avast" in name or "kaspersky" in name:
-                    antivirus.append(item.Name)
+            result = subprocess.run(["sc", "query", "WinDefend"], capture_output=True, text=True)
+            if "RUNNING" in result.stdout:
+                antivirus.append("Windows Defender")
         except:
             pass
-            
-        # Проверка через службы
+
+        # Проверка через PowerShell
         try:
-            for service in c.Win32_Service():
-                name = service.Name.lower()
-                if "antivirus" in name or "avp" in name or "defender" in name:
-                    antivirus.append(service.DisplayName)
+            ps_command = "Get-CimInstance -Namespace root/SecurityCenter2 -ClassName AntivirusProduct | Select-Object displayName"
+            result = subprocess.run(["powershell", "-Command", ps_command], capture_output=True, text=True)
+            if result.stdout.strip():
+                for line in result.stdout.splitlines():
+                    if line.strip() and "displayName" not in line:
+                        antivirus.append(line.strip())
         except:
             pass
-            
+
+        # Проверка через реестр
+        try:
+            import winreg
+            with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall") as key:
+                for i in range(0, winreg.QueryInfoKey(key)[0]):
+                    try:
+                        subkey_name = winreg.EnumKey(key, i)
+                        with winreg.OpenKey(key, subkey_name) as subkey:
+                            try:
+                                name = winreg.QueryValueEx(subkey, "DisplayName")[0]
+                                if "antivirus" in name.lower() or "security" in name.lower() or "avast" in name.lower() or "kaspersky" in name.lower():
+                                    antivirus.append(name)
+                            except WindowsError:
+                                pass
+                    except WindowsError:
+                        pass
+        except:
+            pass
+
         return list(set(antivirus)) if antivirus else ["Антивирусы не обнаружены"]
     except Exception as e:
         logger.error(f"Windows AV detection failed: {e}")
