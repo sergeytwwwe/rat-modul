@@ -1,6 +1,7 @@
 import platform
 import subprocess
 import logging
+import psutil
 from typing import List
 
 logger = logging.getLogger(__name__)
@@ -24,39 +25,62 @@ def _detect_windows_antivirus() -> List[str]:
     try:
         # Проверка Windows Defender
         try:
-            result = subprocess.run(["sc", "query", "WinDefend"], capture_output=True, text=True)
+            result = subprocess.run(["sc", "query", "WinDefend"], capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
             if "RUNNING" in result.stdout:
-                antivirus.append("Windows Defender")
+                antivirus.append("Windows Defender (работает)")
         except:
             pass
 
-        # Проверка через PowerShell
+        # Проверка через WMI
         try:
-            ps_command = "Get-CimInstance -Namespace root/SecurityCenter2 -ClassName AntivirusProduct | Select-Object displayName"
-            result = subprocess.run(["powershell", "-Command", ps_command], capture_output=True, text=True)
+            cmd = 'wmic /namespace:\\\\root\\SecurityCenter2 path AntiVirusProduct get displayName /value'
+            result = subprocess.run(cmd, capture_output=True, text=True, shell=True, creationflags=subprocess.CREATE_NO_WINDOW)
             if result.stdout.strip():
                 for line in result.stdout.splitlines():
-                    if line.strip() and "displayName" not in line:
-                        antivirus.append(line.strip())
+                    if line.startswith("displayName="):
+                        av_name = line.split("=", 1)[1].strip()
+                        if av_name:
+                            antivirus.append(av_name)
         except:
             pass
 
-        # Проверка через реестр
+        # Проверка через службы
+        common_av_services = {
+            "avast": "Avast Antivirus",
+            "AVP": "Kaspersky",
+            "bdss": "BitDefender",
+            "ekrn": "ESET NOD32",
+            "McAfee": "McAfee",
+            "MsMpEng": "Microsoft Defender",
+            "Sophos": "Sophos",
+            "Symantec": "Norton",
+            "Trend Micro": "Trend Micro"
+        }
+
         try:
-            import winreg
-            with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall") as key:
-                for i in range(0, winreg.QueryInfoKey(key)[0]):
-                    try:
-                        subkey_name = winreg.EnumKey(key, i)
-                        with winreg.OpenKey(key, subkey_name) as subkey:
-                            try:
-                                name = winreg.QueryValueEx(subkey, "DisplayName")[0]
-                                if "antivirus" in name.lower() or "security" in name.lower() or "avast" in name.lower() or "kaspersky" in name.lower():
-                                    antivirus.append(name)
-                            except WindowsError:
-                                pass
-                    except WindowsError:
-                        pass
+            result = subprocess.run(["sc", "query"], capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
+            for service, name in common_av_services.items():
+                if service in result.stdout:
+                    antivirus.append(name)
+        except:
+            pass
+
+        # Проверка через процессы
+        try:
+            for proc in psutil.process_iter(['name']):
+                proc_name = proc.info['name'].lower()
+                if "avast" in proc_name:
+                    antivirus.append("Avast Antivirus")
+                elif "avg" in proc_name:
+                    antivirus.append("AVG Antivirus")
+                elif "kaspersky" in proc_name:
+                    antivirus.append("Kaspersky")
+                elif "bdagent" in proc_name:
+                    antivirus.append("BitDefender")
+                elif "egui" in proc_name or "ekrn" in proc_name:
+                    antivirus.append("ESET NOD32")
+                elif "mcshield" in proc_name:
+                    antivirus.append("McAfee")
         except:
             pass
 
@@ -70,18 +94,19 @@ def _detect_linux_antivirus() -> List[str]:
     av = []
     try:
         # Проверка ClamAV
-        result = subprocess.run(["clamscan", "--version"], capture_output=True, text=True)
-        if "ClamAV" in result.stdout:
-            av.append("ClamAV")
-    except:
-        pass
-        
-    try:
+        try:
+            result = subprocess.run(["clamscan", "--version"], capture_output=True, text=True)
+            if "ClamAV" in result.stdout:
+                av.append("ClamAV")
+        except:
+            pass
+            
         # Проверка rkhunter
-        result = subprocess.run(["rkhunter", "--version"], capture_output=True, text=True)
-        if "Rootkit Hunter" in result.stdout:
-            av.append("Rootkit Hunter")
-    except:
-        pass
-        
-    return av if av else ["Антивирусы не обнаружены"]
+        try:
+            result = subprocess.run(["rkhunter", "--version"], capture_output=True, text=True)
+            if "Rootkit Hunter" in result.stdout:
+                av.append("Rootkit Hunter")
+        except:
+            pass
+            
+        return av if av else ["Антивирусы не обнаружены"]
