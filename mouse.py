@@ -16,7 +16,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-def jiggle_mouse():
+def jiggle():
     """Двигает мышкой"""
     try:
         logger.info("🖱 Получена команда: Дергать мышкой")
