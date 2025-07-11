@@ -3,6 +3,7 @@ import numpy as np
 import logging
 import time
 from scipy.io.wavfile import write
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
