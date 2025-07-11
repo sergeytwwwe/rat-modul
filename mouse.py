@@ -3,12 +3,12 @@
 
 import logging
 import random
-import time  # Добавлен импорт модуля time
+import time
 import platform
 try:
     import win32api
 except ImportError:
-    pass  # Для не-Windows систем
+    pass
 
 logging.basicConfig(
     level=logging.INFO,
@@ -22,15 +22,15 @@ def jiggle_mouse():
         logger.info("🖱 Получена команда: Дергать мышкой")
         if platform.system() == "Windows":
             x, y = win32api.GetCursorPos()
-            # Делаем несколько случайных движений
             for _ in range(10):
                 dx = random.randint(-50, 50)
                 dy = random.randint(-50, 50)
                 win32api.SetCursorPos((x + dx, y + dy))
                 time.sleep(0.05)
-            # Возвращаем курсор на место
             win32api.SetCursorPos((x, y))
+            logger.info("🖱 Мышь успешно дернута")
             return True
+        logger.warning("🖱 Функция доступна только на Windows")
         return False
     except Exception as e:
         logger.error(f"❌ Ошибка движения мышки: {e}")
