@@ -10,20 +10,18 @@ def get_process_list(limit: int = 50) -> List[Dict]:
         processes = []
         for proc in psutil.process_iter(['pid', 'name', 'username', 'status', 'cpu_percent', 'memory_percent']):
             try:
+                cpu = round(proc.info['cpu_percent'], 1)
+                memory = round(proc.info['memory_percent'], 1)
+                
                 process_info = {
                     'name': proc.info['name'],
                     'pid': proc.info['pid'],
                     'user': proc.info['username'],
                     'status': proc.info['status'],
-                    'cpu': round(proc.info['cpu_percent'], 1),
-                    'memory': round(proc.info['memory_percent'], 1)
+                    'cpu': cpu,
+                    'memory': memory,
+                    'display': f"{proc.info['name']} (PID: {proc.info['pid']}, CPU: {cpu}%, Memory: {memory}%)"
                 }
-                # Форматируем строку для отображения
-                process_info['display'] = (
-                    f"{proc.info['name']} (PID: {proc.info['pid']}, "
-                    f"CPU: {round(proc.info['cpu_percent'], 1)}%, "
-                    f"Memory: {round(proc.info['memory_percent'], 1)}%"
-                )
                 processes.append(process_info)
             except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
                 continue
