@@ -18,8 +18,8 @@ def show_messagebox(title: str, text: str, style: str = "info") -> bool:
         }
         
         style_code = styles.get(style.lower(), 0x40)
-        
-        ctypes.windll.user32.MessageBoxW(0, text, title, style_code)
+        # Добавляем флаг MB_TASKMODAL (0x2000) чтобы убрать значок Python
+        result = ctypes.windll.user32.MessageBoxW(0, text, title, style_code | 0x2000)
         return True
     except Exception as e:
         logger.error(f"MessageBox error: {e}")
