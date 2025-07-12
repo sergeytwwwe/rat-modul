@@ -5,7 +5,7 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-def show_messagebox(title: str, text: str, style: str = "info") -> bool:
+def display_message(title: str, text: str, style: str = "info") -> bool:
     """Показывает MessageBox на Windows"""
     try:
         if platform.system() != "Windows":
