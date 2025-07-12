@@ -1,8 +1,15 @@
 import os
 import random
 import time
+import platform
 import asyncio
 from telegram import Bot, ReplyKeyboardMarkup, KeyboardButton
+
+# Глобальные переменные для конфигурации
+BOT_TOKEN = ""
+CHAT_IDS = []
+DEVICE_NAME = ""
+modules = {}
 
 def generate_temp_filename(extension):
     random_str = ''.join([str(time.time()).replace('.', '')[-6:], os.urandom(4).hex()])
@@ -115,7 +122,7 @@ async def create_processes_menu(user_id, page=0):
         message = f"📊 Процессов: {total_processes} | Страница {page + 1}/{total_pages}\n"
         
         for proc in procs[start_index:end_index]:
-            keyboard.append([KeyboardButton(f"🔹 {proc['name']} (PID: {proc['pid']})")
+            keyboard.append([KeyboardButton(f"🔹 {proc['name']} (PID: {proc['pid']})")])
         
         nav_buttons = []
         if page > 0:
@@ -132,8 +139,10 @@ async def create_processes_menu(user_id, page=0):
         print(f"❌ Ошибка создания меню процессов: {e}")
         return None, f"❌ Ошибка получения процессов: {e}"
 
-def initialize(bot_token, chat_ids, device_name):
-    global BOT_TOKEN, CHAT_IDS, DEVICE_NAME
+def initialize(bot_token, chat_ids, device_name, modules_dict=None):
+    global BOT_TOKEN, CHAT_IDS, DEVICE_NAME, modules
     BOT_TOKEN = bot_token
     CHAT_IDS = chat_ids
     DEVICE_NAME = device_name
+    if modules_dict:
+        modules = modules_dict
