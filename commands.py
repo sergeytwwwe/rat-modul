@@ -1,7 +1,8 @@
 import os
 import time
 import asyncio
-
+import platform
+from telegram import KeyboardButton, ReplyKeyboardMarkup
 async def take_screenshot(user_id):
     if not modules.get('screenshot'):
         print("❌ Модуль screenshot не загружен")
