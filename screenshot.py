@@ -1,7 +1,7 @@
 import logging
 import time
 import os
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageGrab
 import ctypes
 import ctypes.wintypes
 
@@ -24,14 +24,31 @@ def take_screenshot():
         user32 = ctypes.WinDLL('user32')
         gdi32 = ctypes.WinDLL('gdi32')
         
+        # Определяем структуру CURSORINFO
+        class CURSORINFO(ctypes.Structure):
+            _fields_ = [
+                ("cbSize", ctypes.wintypes.DWORD),
+                ("flags", ctypes.wintypes.DWORD),
+                ("hCursor", ctypes.wintypes.HANDLE),
+                ("ptScreenPos", ctypes.wintypes.POINT)
+            ]
+        
         # Получение текущей позиции курсора
-        cursor_info = ctypes.wintypes.CURSORINFO()
+        cursor_info = CURSORINFO()
         cursor_info.cbSize = ctypes.sizeof(cursor_info)
         user32.GetCursorInfo(ctypes.byref(cursor_info))
         
         if cursor_info.flags == 1:  # CURSOR_SHOWING
             # Получение иконки курсора
-            icon_info = ctypes.wintypes.ICONINFO()
+            class ICONINFO(ctypes.Structure):
+                _fields_ = [
+                    ("fIcon", ctypes.wintypes.BOOL),
+                    ("xHotspot", ctypes.wintypes.DWORD),
+                    ("yHotspot", ctypes.wintypes.DWORD),
+                    ("hbmMask", ctypes.wintypes.HBITMAP),
+                    ("hbmColor", ctypes.wintypes.HBITMAP)
+                ]
+            icon_info = ICONINFO()
             user32.GetIconInfo(cursor_info.hCursor, ctypes.byref(icon_info))
             
             # Создание объекта для рисования
@@ -43,11 +60,10 @@ def take_screenshot():
             # Учет горячей точки курсора
             hotspot_x, hotspot_y = icon_info.xHotspot, icon_info.yHotspot
             
-            # Загрузка иконки курсора (примерно, так как точное извлечение иконки сложнее)
-            # Для упрощения рисуем простой прямоугольник или крестик в позиции курсора
+            # Рисуем курсор как полупрозрачный красный прямоугольник
             draw.rectangle(
                 (x - hotspot_x, y - hotspot_y, x - hotspot_x + 16, y - hotspot_y + 16),
-                fill=(255, 0, 0, 128)  # Полупрозрачный красный прямоугольник для видимости
+                fill=(255, 0, 0, 128)  # Полупрозрачный красный прямоугольник
             )
             
             # Освобождение ресурсов
