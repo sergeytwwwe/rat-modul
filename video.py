@@ -29,6 +29,15 @@ def record_video(seconds):
             user32 = ctypes.WinDLL('user32')
             gdi32 = ctypes.WinDLL('gdi32')
             
+            # Определяем структуру CURSORINFO
+            class CURSORINFO(ctypes.Structure):
+                _fields_ = [
+                    ("cbSize", ctypes.wintypes.DWORD),
+                    ("flags", ctypes.wintypes.DWORD),
+                    ("hCursor", ctypes.wintypes.HANDLE),
+                    ("ptScreenPos", ctypes.wintypes.POINT)
+                ]
+            
             start_time = time.time()
             while (time.time() - start_time) < seconds:
                 # Захват кадра
@@ -37,7 +46,7 @@ def record_video(seconds):
                 frame = cv2.cvtColor(frame, cv2.COLOR_RGBA2RGB)
                 
                 # Получение позиции и иконки курсора
-                cursor_info = ctypes.wintypes.CURSORINFO()
+                cursor_info = CURSORINFO()
                 cursor_info.cbSize = ctypes.sizeof(cursor_info)
                 user32.GetCursorInfo(ctypes.byref(cursor_info))
                 
